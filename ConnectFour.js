@@ -58,10 +58,9 @@ export default class ConnectFour {
     // set winner if checkWinnerWithColumn is true otherwise switch current player
     if (this.checkWinnerWithColumn(col)) {
       this.winner = this.currentPiece;
-      return false;
+      return;
     }
     this.switchcurrentPiece();
-    return true;
   }
 
   switchcurrentPiece() {
@@ -120,7 +119,6 @@ export default class ConnectFour {
     const board = this.board.getBoard();
     let currRow = Board.ROW_LENGTH - 1;
     let connected = 0;
-    // console.log('col: ', board[col])
     while (currRow > 0 && connected < 4) {
       if (
         board[currRow][col] &&
