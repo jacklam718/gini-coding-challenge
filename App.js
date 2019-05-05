@@ -4,6 +4,24 @@ import ConnectFour from './ConnectFour';
 
 const gridSize = Dimensions.get('window').width / 7;
 
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#fff',
+    justifyContent: 'center',
+  },
+  grid: {
+    margin: 1,
+    height: gridSize,
+    width: gridSize,    
+  },
+  text: {
+    fontSize: 30,
+    color: 'black',
+    textAlign: 'center',
+  },
+});
+
 export default class App extends React.Component {
   connectFour = new ConnectFour();
 
@@ -18,36 +36,32 @@ export default class App extends React.Component {
 
   renderBord() {
     const { currentPlayer } = this.connectFour;
-    const board = this.connectFour.board.getBoard();
-    
+    const grids = this.connectFour.board.getGrids();
     return (
       <View>
-        {board.map((row, rowIndex) => {
-          let content = row.map((item, colIndex) => (
-            <View style={{ }}>
+        {grids.map((row, rowIndex) => (
+          <View
+            style={{ flexDirection: 'row' }}
+            key={`row-${rowIndex}`}
+          >
+            {row.map((piece, colIndex) => (
               <TouchableOpacity
-                onPress={() => {
-                  this.handlePiecePress(colIndex);
-                }}
-                style={{
-                  margin: 1,
-                  height: gridSize,
-                  width: gridSize,
-                  backgroundColor: (board[rowIndex] && board[rowIndex][colIndex]) ? board[rowIndex][colIndex].color : 'gray' ,
-                }}
+                activeOpacity={1}
+                key={`row-${colIndex}`}
+                onPress={this.handlePiecePress.bind(this, colIndex)}
+                style={[
+                  styles.grid,
+                  {
+                    backgroundColor: piece ? piece.color : 'gray',
+                  },
+                ]}
               />
-            </View>
-          ))
-          return (
-            <View style={{  flexDirection: 'row' }}>
-              {content}
-            </View>
-          )
-        })}
+            ))}
+          </View>
+        ))}
       </View>
-    )
+    );
   }
-
 
   render() {
     const { winner } = this.state;
@@ -57,7 +71,7 @@ export default class App extends React.Component {
         {this.renderBord()}
 
         {winner
-          ? <Text style={{ fontSize: 30, color: 'red', textAlign: 'center' }}>
+          ? <Text style={styles.text}>
               winner: {winner.color}
             </Text>
           : null
@@ -67,12 +81,3 @@ export default class App extends React.Component {
   }
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    // flexDirection: 'row',
-    backgroundColor: '#fff',
-    // alignItems: 'center',
-    justifyContent: 'center',
-  },
-});

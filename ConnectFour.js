@@ -1,3 +1,4 @@
+
 class Piece {
   constructor(color) {
     this.color = color;
@@ -12,28 +13,41 @@ export class Board {
   static COL_LENGTH = 7;
 
   constructor() {
-    // create a 2-dimensional array of board
-    this.board = [];
+    // create board (6x7) grids
+    this.grids = [];
     for (let i = 0; i < Board.ROW_LENGTH; i++) {
-      this.board[i] = [];
+      this.grids[i] = [];
       for (let j = 0; j < Board.COL_LENGTH; j++) {
-        this.board[i].push(null);
+        this.grids[i].push(null);
       }
     }
   }
 
   addPiece(col, piece) {
-    // scan from bottom to top until reached empty block or reached the edge
-    let currRow = Board.ROW_LENGTH - 1;
-    while (this.board[currRow][col] && currRow > 0) {
-      currRow--;
-    }
-    // add piece to empty block
-    this.board[currRow][col] = piece;
+    const row = this.getEmptyGridRowIndex(col);
+    this.grids[row][col] = piece;
   }
 
-  getBoard() {
-    return this.board;
+  getGrids() {
+    return this.grids;
+  }
+
+  getEmptyGridRowIndex(col) {
+    // scan from bottom to top until reached empty block or reached the edge
+    let currRow = this.grids.length-1;
+    while (this.grids[currRow][col] && currRow > 0) {
+      currRow--;
+    }
+    return currRow;
+  }
+
+  getTopNonEmptyGridRowIndex(col) {
+    const rowIndex = this.getEmptyGridRowIndex(col);
+    return rowIndex === 0 ? 0 : rowIndex+1;
+  }
+
+  hasFilledByPiece(row, col, piece) {
+    return this.grids[row][col] === piece;
   }
 }
 
@@ -54,9 +68,12 @@ export default class ConnectFour {
   }
 
   addPiece(col) {
+    if (this.winner) {
+      return;
+    }
     this.board.addPiece(col, this.currentPiece);
-    // set winner if checkWinnerWithColumn is true otherwise switch current player
-    if (this.checkWinnerWithColumn(col)) {
+    // set winner if hasConnected4 is true otherwise switch current player
+    if (this.hasConnected4(col)) {
       this.winner = this.currentPiece;
       return;
     }
@@ -71,65 +88,54 @@ export default class ConnectFour {
     }
   }
 
-  checkWinnerWithColumn(col) {
+  hasConnected4(col) {
     /*
       scan horizontally & vertically use "col(column)" position as starting point
     */
-    return this.traversalHorizontally(col) || this.traversalVertically(col);
+    return this.hasHorizontallyConnected4(col) || this.hasVerticallyConnected4(col);
   }
 
-  traversalHorizontally(col) {
+  hasHorizontallyConnected4(col) {
     /*
-      helper function: scale horizontally from center to left & right
+      helper function: scan horizontally from center to left & right
     */
-    const board = this.board.getBoard();
-    // get filled block position
-    let currRow = Board.ROW_LENGTH - 1;
-    while (!board[currRow][col] && currRow > 0) {
-      currRow--;
-    }
-    let connected = 1;
-    let left = col-1;
-    let right = col+1;
-    let length = Board.COL_LENGTH-1;
-    while (
-      (left > 0 || right < Board.COL_LENGTH-1)  &&
-      connected < 4 &&
-      length > 0
-    ) {
-      // check left side
-      if (board[currRow][left] === this.currentPiece) {
+    // emptyGridRowIndex + 1 = last non-empty row
+    const currRow = this.board.getTopNonEmptyGridRowIndex(col);
+    let connected = this.board.hasFilledByPiece(currRow, col, this.currentPiece)
+      ? 1
+      : 0;
+    let leftCol = col-1;
+    let rightCol = col+1;
+    let colLength = Board.COL_LENGTH;
+    while (connected < 4 && colLength > 0) {
+      // check left,right column & move left,right pointer if they connected
+      if (this.board.hasFilledByPiece(currRow, leftCol, this.currentPiece)) {
         connected++;
-        left--
+        leftCol--;
       }
-      // check right side
-      if (board[currRow][right] === this.currentPiece) {
+      if (this.board.hasFilledByPiece(currRow, rightCol, this.currentPiece)) {
         connected++;
-        right++;
+        rightCol++;
       }
-      length--;
+      colLength--;
     }
-    return connected >= 4 ? true : false;
+    return connected >= 4;
   }
 
-  traversalVertically(col) {
+  hasVerticallyConnected4(col) {
     /*
-      helper function: scale vertically from bottom to top
+      helper function: scan vertically from bottom to top
     */
-    const board = this.board.getBoard();
-    let currRow = Board.ROW_LENGTH - 1;
+    let currRow = this.board.getTopNonEmptyGridRowIndex(col);
     let connected = 0;
-    while (currRow > 0 && connected < 4) {
-      if (
-        board[currRow][col] &&
-        board[currRow][col] === this.currentPiece
-      ) {
-        connected++
+    while (connected < 4 && currRow < Board.ROW_LENGTH) {
+      if (this.board.hasFilledByPiece(currRow, col, this.currentPiece)) {
+        connected++;
       } else {
         connected = 0;
       }
-      currRow--;
+      currRow++;
     }
-    return connected >= 4 ? true : false;
+    return connected >= 4;
   }
 }
